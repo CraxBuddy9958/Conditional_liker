@@ -1,5 +1,4 @@
 // run.js - Multi-Account Bot v3.0 - TURBO EDITION
-// Optimized for speed: parallel processing, faster timings, toggleable link deletion
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-extra');
@@ -8,25 +7,20 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
 // ============================================
-// ⚡ TURBO CONFIG - ADJUST ALL SETTINGS HERE
+// ⚡ CONFIG - CHANGE SETTINGS HERE
 // ============================================
 const CONFIG = {
-    // Timing
     ONE_HOUR_MS: 60 * 60 * 1000,
-    RESTART_DELAY_MS: 2000,           // Reduced from 5000
-    MAX_RESTARTS: 10,                  // Increased from 5
-    IDLE_TIMEOUT_MS: 60 * 1000,        // Reduced from 3 min to 1 min
-    PAGE_TIMEOUT: 30000,               // Reduced from 60000
-    MAIN_LOOP_INTERVAL: 10000,         // Check every 10s instead of 60s
-
-    // Execution Mode
-    PARALLEL_ACCOUNTS: true,           // Run accounts in parallel
-    MAX_CONCURRENT_PAGES: 3,           // Max browsers at once
-
-    // 🔥 LINK DELETION MODE 🔥
-    // true  = Delete links from Firebase after fetching (no duplicates)
-    // false = Track used links locally only (keep all links in DB)
-    DELETE_LINKS: true,                // <-- CHANGE THIS TO TOGGLE MODE
+    RESTART_DELAY_MS: 2000,
+    MAX_RESTARTS: 10,
+    IDLE_TIMEOUT_MS: 60 * 1000,
+    PAGE_TIMEOUT: 30000,
+    MAIN_LOOP_INTERVAL: 10000,
+    PARALLEL_ACCOUNTS: true,
+    MAX_CONCURRENT_PAGES: 3,
+    
+    // 🔥 DELETE_LINKS: true = delete from DB | false = track locally
+    DELETE_LINKS: true,
 };
 
 function sleep(ms) { 
@@ -38,13 +32,8 @@ function loadScript(filename) {
     return fs.existsSync(fullPath) ? fs.readFileSync(fullPath, 'utf8') : null;
 }
 
-// ============================================
-// DYNAMICALLY PATCH STEP1 WITH CONFIG
-// ============================================
 function prepareStep1Script(scriptContent) {
     if (!scriptContent) return null;
-    
-    // Replace the DELETE_LINKS variable with our config value
     return scriptContent.replace(
         /const DELETE_LINKS = (true|false);/,
         `const DELETE_LINKS = ${CONFIG.DELETE_LINKS};`
@@ -68,12 +57,8 @@ function normalizeCookie(c) {
     return cookie;
 }
 
-// ============================================
-// STATISTICS TRACKER
-// ============================================
 const stats = {
     totalCycles: 0,
-    totalLinksProcessed: 0,
     startTime: Date.now(),
     getCyclesPerHour() {
         const hours = (Date.now() - this.startTime) / (60 * 60 * 1000);
@@ -81,9 +66,6 @@ const stats = {
     }
 };
 
-// ============================================
-// SINGLE SESSION RUNNER (OPTIMIZED)
-// ============================================
 async function runSession(account, scripts, sessionId) {
     console.log(`\n${'='.repeat(50)}`);
     console.log(`🚀 SESSION #${sessionId}: ${account.name}`);
@@ -96,7 +78,6 @@ async function runSession(account, scripts, sessionId) {
     let sessionStartTime = Date.now();
 
     try {
-        // Create browser with optimized args
         browser = await puppeteer.launch({
             headless: true,
             executablePath: process.env.CHROME_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
@@ -123,7 +104,6 @@ async function runSession(account, scripts, sessionId) {
 
         page = await browser.newPage();
 
-        // Faster page setup - block unnecessary resources
         await page.setRequestInterception(true);
         page.on('request', (req) => {
             const resourceType = req.resourceType();
@@ -144,13 +124,11 @@ async function runSession(account, scripts, sessionId) {
             Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
         });
 
-        // Set cookies
         if (Array.isArray(account.cookies) && account.cookies.length) {
             await page.setCookie(...account.cookies.map(normalizeCookie));
             console.log(`[runner] 🍪 Set ${account.cookies.length} cookies`);
         }
 
-        // Event handlers
         page.on('console', msg => {
             const text = msg.text();
             if (text.includes('Step1') || text.includes('Step2') || text.includes('Liked') || text.includes('Deleted') || text.includes('Tracked')) {
@@ -195,7 +173,6 @@ async function runSession(account, scripts, sessionId) {
             }
         }
 
-        // Navigate to start
         console.log('[runner] 🌐 Loading:', account.startUrl || "https://craxpro.to");
         await page.goto(account.startUrl || "https://craxpro.to", { 
             waitUntil: 'domcontentloaded',
@@ -203,7 +180,6 @@ async function runSession(account, scripts, sessionId) {
         });
         console.log('[runner] ✅ Page loaded, running TURBO mode...\n');
 
-        // Main loop - check more frequently
         while (Date.now() - sessionStartTime < CONFIG.ONE_HOUR_MS) {
             const elapsed = Math.floor((Date.now() - sessionStartTime) / 60000);
             const idle = Math.floor((Date.now() - lastActivity) / 1000);
@@ -231,9 +207,6 @@ async function runSession(account, scripts, sessionId) {
     return cycleCount;
 }
 
-// ============================================
-// PARALLEL RUNNER
-// ============================================
 async function runParallel(accounts, scripts) {
     console.log('\n🔥 Running accounts in PARALLEL mode...');
     
@@ -253,9 +226,6 @@ async function runParallel(accounts, scripts) {
     return results;
 }
 
-// ============================================
-// SEQUENTIAL RUNNER
-// ============================================
 async function runSequential(accounts, scripts) {
     console.log('\n🔁 Running accounts in SEQUENTIAL mode...');
     
@@ -271,9 +241,6 @@ async function runSequential(accounts, scripts) {
     return results;
 }
 
-// ============================================
-// MAIN
-// ============================================
 async function main() {
     console.log('\n' + '='.repeat(60));
     console.log('🚀 MULTI-ACCOUNT BOT v3.0 - TURBO EDITION');
@@ -290,14 +257,12 @@ async function main() {
         process.exit(1);
     }
 
-    // Load scripts and patch step1 with our config
     const rawStep1 = loadScript('step1_v4.js');
     const scripts = {
-        step1: prepareStep1Script(rawStep1),  // Patched with CONFIG.DELETE_LINKS
+        step1: prepareStep1Script(rawStep1),
         step2: loadScript('step2_v4.js'),
     };
 
-    // Display configuration
     console.log('⚙️ ═════════════════════════════════════════════════');
     console.log(`👥 Accounts: ${accounts.length}`);
     console.log(`📜 Scripts: step1=${scripts.step1?'✓':'✗'} step2=${scripts.step2?'✓':'✗'}`);
@@ -309,7 +274,6 @@ async function main() {
     const totalStartTime = Date.now();
     let restarts = 0;
 
-    // Main execution loop
     while (Date.now() - totalStartTime < CONFIG.ONE_HOUR_MS && restarts < CONFIG.MAX_RESTARTS) {
         try {
             const results = CONFIG.PARALLEL_ACCOUNTS 
