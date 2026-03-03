@@ -1,0 +1,57 @@
+[
+  {
+    "name": "my_crax_account",
+    "startUrl": "https://craxpro.to",
+    "cookies": [
+      {
+        "domain": ".craxpro.to",
+        "expirationDate": 1803891277.534947,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "xf_user",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "836827%2CgnCEXqGQQ7m5x0K04PjQRJR77YxPUu88uyZabI3j"
+      },
+      {
+        "domain": ".craxpro.to",
+        "hostOnly": false,
+        "httpOnly": false,
+        "name": "xf_csrf",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": true,
+        "storeId": null,
+        "value": "9jA_ry5uOz91gh2U"
+      },
+      {
+        "domain": ".craxpro.to",
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "xf_sam_ad_views",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": true,
+        "storeId": null,
+        "value": "%7B%22159%22%3A1772523551%7D"
+      },
+      {
+        "domain": ".craxpro.to",
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "xf_session",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": true,
+        "storeId": null,
+        "value": "RDIiSVqMl-_hnGcgTPe-kIM_D4XXTPMw"
+      }
+    ]
+  }
+]
